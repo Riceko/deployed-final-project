@@ -6,10 +6,16 @@ from datetime import datetime, timedelta
 import os
 import sys
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, request, redirect, url_for, abort
+from flask import Flask, render_template, request, redirect, url_for, abort, session
+import secrets
 
 app = Flask(__name__)
 app.config['data'] = 'data'
+app.secret_key = secrets.token_hex()
+
+# This dictionary will store all of the data for all of the different sessions.
+# The key is the session_id found in the session array managed by Flask.
+ships = {}
 
 def call_algorithm(filename):
     FOLDER_PATH = './data/'
@@ -18,8 +24,17 @@ def call_algorithm(filename):
     X[:, 1] = np.char.strip(X[:, 1], "]")
     X[:, 2] = np.char.strip(X[:, 2], "{} ")
     X[:, 3] = np.char.strip(X[:, 3], " ")
+    ships[session['session_id']].append(X)
     # CALL THE ALGORITHM HERE
     # algorithm(X)
+
+def unique_token():
+    while True:
+        # Use the number 16 since it's what most encryption services use
+        # so it must be pretty good.
+        token = secrets.token_urlsafe(16)
+        if token not in ships:
+            return token
 
 @app.route("/")
 def index():
@@ -46,6 +61,13 @@ def upload():
         
         # upload the file to the 'data' folder
         uploaded_file.save(os.path.join(app.config['data'], filename))
+
+        # Flask manages an array session[] for us but it lives in the browser
+        # cookies so the amount of storage isn't enough for our large grid.
+        # To fix this, we use our own dictionary to store info.
+        # V stores a session_id in the browser cookies
+        session['session_id'] = unique_token()
+        ships[session['session_id']] = []
 
         # call the algorithm portion to do its thing on the info in the file
         call_algorithm(filename)
