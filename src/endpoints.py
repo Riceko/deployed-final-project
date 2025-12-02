@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import os
 import sys
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, request, redirect, url_for, abort, session
+from flask import Flask, render_template, request, redirect, url_for, abort, session, jsonify
 import secrets
 
 app = Flask(__name__)
@@ -15,6 +15,13 @@ app.secret_key = secrets.token_hex()
 
 # This dictionary will store all of the data for all of the different sessions.
 # The key is the session_id found in the session array managed by Flask.
+# The value is an dictionary containing several things
+# 'grid' = an array of the entire ship at step n. ship[x] = (y_coord, x_coord, container_weight, container_name)
+# 'park' = a string that is either 'blank', 'green', or 'red' indicating what color the park cell should be at the current step.
+# 'steps' = an nparray of steps we have to take. steps[n - 1] = (old_y_coord, old_x_coord, new_y_coord, new_x_coord)
+#           where n is the step we're currently on.
+# 'num_steps' = total number of steps.
+# 'current_step_num' = a counter to track what step we are currently on. Initialized to 0 so that it syncs with the array 'steps'
 ships = {}
 
 def call_algorithm(filename):
@@ -24,9 +31,12 @@ def call_algorithm(filename):
     X[:, 1] = np.char.strip(X[:, 1], "]")
     X[:, 2] = np.char.strip(X[:, 2], "{} ")
     X[:, 3] = np.char.strip(X[:, 3], " ")
-    ships[session['session_id']].append(X)
+    ships[session['session_id']]['grid'] = X
     # CALL THE ALGORITHM HERE
-    # algorithm(X)
+    # steps = algorithm(X)
+    # ships[session['session_id']]['steps'] = steps
+    # ships[session['session_id']]['num_steps'] = steps.size() or len() or something idk
+    # ships[session['session_id']]['current_step_num'] = 0
 
 def unique_token():
     while True:
@@ -37,12 +47,13 @@ def unique_token():
             return token
 
 @app.route("/")
-def index():
-    return render_template("index.html")
+def display_start():
+    return render_template("start.html")
 
 # POST request that takes in a file in the body of the request.
 # The file should have the key 'file'.
 # Saves the file into the 'data' folder.
+# Redirects to the grid page if the file exists.
 @app.route('/', methods = ['POST'])
 def upload():
     # get the file with the 'file' key from the request
@@ -71,7 +82,36 @@ def upload():
 
         # call the algorithm portion to do its thing on the info in the file
         call_algorithm(filename)
-    return redirect(url_for('index'))
+
+        # also return the grid at the current step (which is step 1), the total number of steps, the current step
+
+        # display the grid
+        return redirect(url_for('display_grid'))
+    
+    # if a file doesn't exist, redirect to the start page
+    return redirect(url_for('display_start'))
+
+@app.route("/grid")
+def display_grid():
+    return render_template("grid.html")
+
+# GET method that returns a json containing all the info needed to display the grid.
+# This will be the information for the current step, not the next step.
+# Any method that starts with '/api' returns a json
+@app.route('/api/current_grid', method=['GET'])
+def current_grid():
+    return jsonify(grid=ships[session['session_id']]['grid'],
+                   park_cell=ships[session['session_id']]['park'],
+                   steps=ships[session['session_id']]['steps'],
+                   num_steps=ships[session['session_id']]['num_steps'],
+                   current_step_num=ships[session['session_id']]['current_step_num'])
+
+# POST method to call when the user presses the enter key. returns the next grid step.
+# No input needed.
+# Output, a grid object containing the grid to display, the step we're on, the total number of steps.
+@app.route('/api/next_grid', methods = ['POST'])
+def next_grid():
+    pass
 
 if __name__ == '__main__':
     app.run(debug=True)
