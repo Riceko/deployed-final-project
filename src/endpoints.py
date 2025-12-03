@@ -31,12 +31,32 @@ def call_algorithm(filename):
     X[:, 1] = np.char.strip(X[:, 1], "]")
     X[:, 2] = np.char.strip(X[:, 2], "{} ")
     X[:, 3] = np.char.strip(X[:, 3], " ")
+    X = np.hstack((X, np.array([[""] * len(X)]).T))
     ships[session['session_id']]['grid'] = X
     # CALL THE ALGORITHM HERE
-    # steps = algorithm(X)
-    # ships[session['session_id']]['steps'] = steps
-    # ships[session['session_id']]['num_steps'] = steps.size() or len() or something idk
-    # ships[session['session_id']]['current_step_num'] = 0
+    # steps, total_time = algorithm(X)
+    total_time = 10
+    steps = np.array([[1, 2, 3, 4],
+                      [2, 3, 4, 5]])
+    steps = np.insert(steps, 0, [-1, -1, steps[0, 0], steps[0, 1]], axis=0)
+    steps = np.vstack((steps, [steps[-1, 2], steps[-1, 3], -1, -1]))
+
+    ships[session['session_id']]['park'] = 'green'
+    ships[session['session_id']]['steps'] = steps
+    ships[session['session_id']]['num_steps'] = len(steps)
+    ships[session['session_id']]['current_step_num'] = 0
+    ships[session['session_id']]['total_time'] = total_time
+    y = steps[0, 2]
+    y_coord = str(y)
+    if y < 10:
+        y_coord = '0' + y_coord
+    x = steps[0, 3]
+
+    x_coord = str(x)
+    if x < 10:
+        x_coord = '0' + x_coord
+    index = np.where((X[:, 0] == y_coord) & (X[:, 1] == x_coord))[0]
+    ships[session['session_id']]['grid'][index, 4] = 'red'
 
 def unique_token():
     while True:
@@ -57,6 +77,8 @@ def display_start():
 @app.route('/', methods = ['POST'])
 def upload():
     # get the file with the 'file' key from the request
+    # a = np.array([[""] * 96])
+    # print(a)
     uploaded_file = request.files['file']
 
     # if there is a file, handle it
@@ -78,7 +100,7 @@ def upload():
         # To fix this, we use our own dictionary to store info.
         # V stores a session_id in the browser cookies
         session['session_id'] = unique_token()
-        ships[session['session_id']] = []
+        ships[session['session_id']] = {}
 
         # call the algorithm portion to do its thing on the info in the file
         call_algorithm(filename)
@@ -98,11 +120,11 @@ def display_grid():
 # GET method that returns a json containing all the info needed to display the grid.
 # This will be the information for the current step, not the next step.
 # Any method that starts with '/api' returns a json
-@app.route('/api/current_grid', method=['GET'])
+@app.route('/api/current_grid', methods = ['GET'])
 def current_grid():
-    return jsonify(grid=ships[session['session_id']]['grid'],
+    return jsonify(grid=ships[session['session_id']]['grid'].tolist(),
                    park_cell=ships[session['session_id']]['park'],
-                   steps=ships[session['session_id']]['steps'],
+                   steps=ships[session['session_id']]['steps'].tolist(),
                    num_steps=ships[session['session_id']]['num_steps'],
                    current_step_num=ships[session['session_id']]['current_step_num'])
 
