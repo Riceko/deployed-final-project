@@ -63,18 +63,21 @@ def neighbors(node: object):
             idx_top_crates_list.append(idx_crates[-1])
         if idx_top_avail.size !=0:
             idx_top_avail_list.append(idx_top_avail[0])
+        else:
+            idx_top_avail_list.append(-1) # blank
+
     
     top_avail = np.vstack(idx_top_avail_list).ravel()
     top_crates = np.vstack(idx_top_crates_list).ravel()
 
-    print('top_avail:', top_avail)
-    print('top_crates:', top_crates)
     neighbors_list = []
     for idx_crate in top_crates:
         crate = node.w[idx_crate]
         col_num = crate[1]
-        for idx_spot in np.delete(top_avail, col_num - 1):
-            spot = node.w[idx_spot]
+        
+        for idx_spot in np.delete(top_avail, col_num - 1): 
+            if idx_spot == -1: continue
+            spot = node.w[idx_spot] 
             # create attributes
             action = np.array([crate[0], crate[1], spot[0], spot[1]])
             w = node.w.copy()
@@ -129,7 +132,7 @@ def a_star(X : np.ndarray):
     while not open.empty():
 
         fn, node = open.get()
-        print(node.hn)
+
         if (node.score <= min_global) or (node.score <= min_local): break
         closed.add(node)
         
