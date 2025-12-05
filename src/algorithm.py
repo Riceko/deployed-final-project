@@ -189,8 +189,8 @@ def a_star(X : np.ndarray):
     w_mask = (start.label != 'UNUSED') & (start.label != 'NAN')
     weights = np.sort(start.w[w_mask, 2])
 
-    print(terminal_graphic(start))
-    print(' ')
+    # print(terminal_graphic(start))
+    # print(' ')
 
     min_local = round(total_weight*0.10, 2)
     min_global = 0
@@ -214,7 +214,7 @@ def a_star(X : np.ndarray):
             # print('g(n) =', node.gn,'h(n) =', node.hn, 'f(n) =', node.fn)
             # print('balance_score:', node.score)
             # print('action:', node.action, 'cost:', node.cost)
-            print(terminal_graphic(node))
+            # print(terminal_graphic(node))
             return optimal_path(node)
 
         closed.add(node)
@@ -239,8 +239,8 @@ if __name__ == '__main__':
     X[:, 2] = np.char.strip(X[:, 2], "{} ")
     X[:, 3] = np.char.strip(X[:, 3], " ")
     actions, total_cost = a_star(X)
-    print('actions:', actions)
-    print('total cost:', total_cost)
+    # print('actions:', actions)
+    # print('total cost:', total_cost)
 
 
 
