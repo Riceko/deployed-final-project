@@ -66,19 +66,30 @@ def call_algorithm(filename):
 
     steps, total_time = algorithm.a_star(X)
 
-    steps = np.insert(steps, 0, [9, 1, steps[0, 0], steps[0, 1]], axis=0)
-    steps = np.vstack((steps, [steps[-1, 2], steps[-1, 3], 9, 1]))
+    already_balanced = len(steps) == 0
 
-    ship['park'] = 'green'
+    # if the ship is already balanced, don't add the movements for going
+    # to and from the park cell
+    if not already_balanced:
+        steps = np.insert(steps, 0, [9, 1, steps[0, 0], steps[0, 1]], axis=0)
+        steps = np.vstack((steps, [steps[-1, 2], steps[-1, 3], 9, 1]))
+
+    # if the ships is already balanced, we don't have to display any steps
+    if not already_balanced:
+        ship['park'] = 'green'
+    else:
+        ship['park'] = ''
+
     ship['steps'] = steps
     ship['num_steps'] = len(steps)
     ship['current_step_num'] = 0
     ship['total_time'] = total_time
     ship['move_container'] = False
-    ship['all_done'] = False
+    ship['all_done'] = already_balanced
 
-    index = grid_index(steps[0, 2], steps[0, 3])
-    ship['grid'][index, 4] = 'red'
+    if not already_balanced:
+        index = grid_index(steps[0, 2], steps[0, 3])
+        ship['grid'][index, 4] = 'red'
 
     # print(ships[session['session_id']])
 
@@ -149,9 +160,12 @@ def display_grid():
 @app.route('/api/current_grid', methods = ['GET'])
 def current_grid():
     ship = get_ship()
+    temp_steps = []
+    if len(ship['steps']) != 0:
+        temp_steps = ship['steps'].tolist()
     return jsonify(grid=ship['grid'].tolist(),
                    park_cell=ship['park'],
-                   steps=ship['steps'].tolist(),
+                   steps=temp_steps,
                    num_steps=ship['num_steps'],
                    current_step_num=ship['current_step_num'],
                    all_done=ship['all_done'])
