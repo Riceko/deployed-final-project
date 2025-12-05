@@ -66,6 +66,11 @@ def call_algorithm(filename):
 
     steps, total_time = algorithm.a_star(X)
 
+    # rename the file to "file_nameOUTBOUND.txt"
+    name = filename.split(".")[0]
+    os.rename(FOLDER_PATH+filename, FOLDER_PATH+name+"OUTBOUND.txt")
+
+    # if there are no steps to take, that means the ship is already balanced
     already_balanced = len(steps) == 0
 
     # if the ship is already balanced, don't add the movements for going
@@ -113,8 +118,6 @@ def display_start():
 @app.route('/', methods = ['POST'])
 def upload():
     # get the file with the 'file' key from the request
-    # a = np.array([[""] * 96])
-    # print(a)
     uploaded_file = request.files['file']
 
     # if there is a file, handle it
@@ -140,8 +143,6 @@ def upload():
 
         # call the algorithm portion to do its thing on the info in the file
         call_algorithm(filename)
-
-        # also return the grid at the current step (which is step 1), the total number of steps, the current step
 
         # redirect to the grid display page
         return redirect(url_for('display_grid'))
