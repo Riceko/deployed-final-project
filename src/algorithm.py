@@ -106,10 +106,18 @@ def neighbors(node: object):
 def optimal_path(node: object):
     anchor = node
     actions = []
+    nodes = []
     total_cost = 0
     while anchor.parent is not None:
+        if len(nodes) != 0:
+            prev_node = nodes[-1]
+            prev_action = prev_node.action
+            crane_action = np.array([anchor.action[2], anchor.action[3], prev_action[0], prev_action[1]])
+            actions.append(crane_action)
+            total_cost += g_cost(prev_node, crane_action)
         actions.append(anchor.action)
         total_cost += anchor.cost
+        nodes.append(anchor)
         anchor = anchor.parent
 
     return np.vstack(actions)[::-1], total_cost
@@ -143,7 +151,7 @@ class Node:
         self.label = label # vector length 96 --> represent each label on 8 x12 grid
         self.action = action # vector of [y1, x1, y2, x2] (the action it took to get to the node)
         self.parent = parent # the node in which it came from 
-        self.cost = g_cost(self, action) if action is not None else 0 # fix this later
+        self.cost = g_cost(parent, action) if action is not None else 0 # fix this later
         self.gn = parent.gn + self.cost if parent is not None else self.cost
         self.hn = heuristic(np.sum(w[:, 2])/2, self)
         self.fn = self.gn + self.hn
@@ -178,10 +186,17 @@ def a_star(X : np.ndarray):
     weights = np.sort(start.w[w_mask, 2])
 
     # print('gn = 0', 'h(n) =', start.hn)
-    # print(terminal_graphic(start))
+    print(terminal_graphic(start))
+    print(weights)
 
     min_local = round(total_weight*0.10, 2)
-    min_global = np.diff(np.unique(weights)[0:2]).item() if X.shape[0] % 2 == 0 else weights[0]
+    min_global = 0
+    if weights.size != 0:
+        if X.shape[0] % 2 == 0:
+            min_global = np.diff(np.unique(weights)[0:2]).item() 
+        else: 
+            min_global = weights[0]
+
     # begin
     while not open.empty():
 
@@ -191,10 +206,12 @@ def a_star(X : np.ndarray):
             continue
 
         if (node.score <= min_global) or (node.score <= min_local):
-            # print('g(n) =', node.gn,'h(n) =', node.hn, 'f(n) =', node.fn)
-            # print('balance_score:', node.score)
-            # print('action:', node.action, 'cost:', node.cost)
-            # print(terminal_graphic(node))
+            if node == start:
+                return [], 0
+            print('g(n) =', node.gn,'h(n) =', node.hn, 'f(n) =', node.fn)
+            print('balance_score:', node.score)
+            print('action:', node.action, 'cost:', node.cost)
+            print(terminal_graphic(node))
             return optimal_path(node)
 
         closed.add(node)
@@ -212,14 +229,14 @@ def a_star(X : np.ndarray):
     
 if __name__ == '__main__':
     FOLDER_PATH = './data/'
-    FILE_NAME = 'ShipCase4.txt'
+    FILE_NAME = 'ShipCase3.txt'
     X = np.loadtxt(FOLDER_PATH+FILE_NAME, dtype=str, delimiter=',')
     X[:, 0] = np.char.strip(X[:, 0], "[")
     X[:, 1] = np.char.strip(X[:, 1], "]")
     X[:, 2] = np.char.strip(X[:, 2], "{} ")
     X[:, 3] = np.char.strip(X[:, 3], " ")
     actions = a_star(X)
-    print(a_star)
+    print(actions)
 
 
 
