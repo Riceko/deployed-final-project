@@ -27,27 +27,24 @@ def heuristic(target_weight: int, node: object):
     if p_diff <= s_diff: # heaviver side is S, moving to P
         smaller_diff = abs(p_diff)
         bigger_weights = s_weights
-        OP_SIDE = 7
     else:
         smaller_diff = abs(s_diff)
         bigger_weights = p_weights
-        OP_SIDE = 6
 
     # algorithm
     sum_weight = 0 # to get to at least diff or greater
-    h_cost = 0
-    
+    sum_count = 0
     while sum_weight < smaller_diff:
-        idxs = np.argsort(np.abs(bigger_weights - smaller_diff))
-        idx = idxs[idxs != 0][0] 
+        # pick weight that fills nearly the same about as smaller difference from current to target weight
+        idx = np.argmin(np.abs(bigger_weights - smaller_diff))
         weight = bigger_weights[idx]
 
         sum_weight+=weight
-        h_cost += abs(node.w[idx, 1] - OP_SIDE)
-
-        bigger_weights[idx] = 0
+        sum_count+=1
+        # remove weight from heavier side
+        bigger_weights = np.delete(bigger_weights, idx, axis=0)
     
-    return h_cost
+    return sum_count
 
 def terminal_graphic(node: object):
 
@@ -56,7 +53,7 @@ def terminal_graphic(node: object):
     is_avail = (node.label != 'NAN') & ~is_crate
 
     grid[is_crate] = 'c'
-    grid[is_avail] = ' '
+    grid[is_avail] = '_'
     grid[~is_crate & ~is_avail] = 'x'
 
     grid = grid.reshape(8, 12)[::-1]
@@ -81,9 +78,7 @@ def neighbors(node: object):
             idx_top_crates_list.append(idx_crates[-1])
         if idx_top_avail.size !=0:
             idx_top_avail_list.append(idx_top_avail[0])
-        else:
-            idx_top_avail_list.append(-1) # blank
-
+        
     
     top_avail = np.vstack(idx_top_avail_list).ravel()
     top_crates = np.vstack(idx_top_crates_list).ravel()
@@ -93,9 +88,9 @@ def neighbors(node: object):
         crate = node.w[idx_crate]
         col_num = crate[1]
         
-        for idx_spot in np.delete(top_avail, col_num - 1): 
-            if idx_spot == -1: continue
+        for idx_spot in top_avail: 
             spot = node.w[idx_spot] 
+            if spot[1] == crate[1]: continue
             # create attributes
             action = np.array([crate[0], crate[1], spot[0], spot[1]])
             w = node.w.copy()
@@ -111,20 +106,44 @@ def neighbors(node: object):
 def optimal_path(node: object):
     anchor = node
     actions = []
+    total_cost = 0
     while anchor.parent is not None:
         actions.append(anchor.action)
+        total_cost += anchor.cost
         anchor = anchor.parent
 
-    return np.vstack(actions)[::-1]
+    return np.vstack(actions)[::-1], total_cost
 
+def g_cost(node: object, action: np.ndarray):
+    objects = node.label != 'UNUSED'
+    widths = np.sort(action[[1, 3]])
+    heights = action[[0, 2]]
 
+    bounds = (node.w[:, 1] > widths[0]) & (node.w[:, 1] < widths[1])
+    area = node.w[objects]
+
+    in_between_height = 0
+    if area.size != 0:
+        in_between_height = np.max(area[:, 0])
+
+    total_cost = 0
+    if (heights[0] <= in_between_height) & (heights[1] <= in_between_height):
+        total_cost += np.sum(np.abs(heights - in_between_height)) + 1
+    else:
+        total_cost += np.abs(np.diff(heights)).item()
+
+    total_cost += np.abs(np.diff(widths)).item()
+
+    return total_cost
+
+        
 class Node:
     def __init__(self, w: np.ndarray, label: np.ndarray, action: np.ndarray, parent: object):
         self.w = w # 96 by 3 where cols= y, x, weight --> represent 8 x 12 grid
         self.label = label # vector length 96 --> represent each label on 8 x12 grid
-        self.action = action # vector of [y1, x1, y2, x2]
+        self.action = action # vector of [y1, x1, y2, x2] (the action it took to get to the node)
         self.parent = parent # the node in which it came from 
-        self.cost = abs(action[0] - action[2]) + abs(action[1] + action[3]) if action is not None else 0 # fix this later
+        self.cost = g_cost(self, action) if action is not None else 0 # fix this later
         self.gn = parent.gn + self.cost if parent is not None else self.cost
         self.hn = heuristic(np.sum(w[:, 2])/2, self)
         self.fn = self.gn + self.hn
@@ -167,16 +186,15 @@ def a_star(X : np.ndarray):
     while not open.empty():
 
         fn, node = open.get()
-        print('node popped!')
-        print('g(n) =', node.gn,'h(n) =', node.hn, 'f(n) =', node.fn)
-        print('balance_score:', node.score)
-        print(terminal_graphic(node))
-        input(':')
-        
+                
         if node in closed:
             continue
 
         if (node.score <= min_global) or (node.score <= min_local):
+            print('g(n) =', node.gn,'h(n) =', node.hn, 'f(n) =', node.fn)
+            print('balance_score:', node.score)
+            print('action:', node.action, 'cost:', node.cost)
+            print(terminal_graphic(node))
             return optimal_path(node)
 
         closed.add(node)
@@ -187,11 +205,8 @@ def a_star(X : np.ndarray):
                 open_cost[child] = child.fn
             else:
                 if child.fn < open_cost[child]:
-                    print('already in open_queue but better')
                     open.put((child.fn, child))
                     open_cost[child] = child.fn
-                else:
-                    print('already in open_queue and costs more')
 
     print('path not found.')
     
