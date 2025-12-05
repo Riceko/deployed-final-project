@@ -116,7 +116,9 @@ def optimal_path(node: object):
             actions.append(crane_action)
             total_cost += g_cost(prev_node, crane_action)
         actions.append(anchor.action)
+
         total_cost += anchor.cost
+        print(g_cost(anchor.parent, anchor.action))
         nodes.append(anchor)
         anchor = anchor.parent
 
@@ -128,7 +130,7 @@ def g_cost(node: object, action: np.ndarray):
     heights = action[[0, 2]]
 
     bounds = (node.w[:, 1] > widths[0]) & (node.w[:, 1] < widths[1])
-    area = node.w[objects]
+    area = node.w[objects & bounds]
 
     in_between_height = 0
     if area.size != 0:
@@ -136,8 +138,10 @@ def g_cost(node: object, action: np.ndarray):
 
     total_cost = 0
     if (heights[0] <= in_between_height) & (heights[1] <= in_between_height):
+        print('hill')
         total_cost += np.sum(np.abs(heights - in_between_height)) + 1
     else:
+        print('norm')
         total_cost += np.abs(np.diff(heights)).item()
 
     total_cost += np.abs(np.diff(widths)).item()
@@ -185,9 +189,7 @@ def a_star(X : np.ndarray):
     w_mask = (start.label != 'UNUSED') & (start.label != 'NAN')
     weights = np.sort(start.w[w_mask, 2])
 
-    # print('gn = 0', 'h(n) =', start.hn)
     print(terminal_graphic(start))
-    print(weights)
 
     min_local = round(total_weight*0.10, 2)
     min_global = 0
