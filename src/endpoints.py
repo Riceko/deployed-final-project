@@ -8,6 +8,7 @@ import sys
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, abort, session, jsonify
 import secrets
+import algorithm
 
 app = Flask(__name__)
 app.config['data'] = 'data'
@@ -62,18 +63,11 @@ def call_algorithm(filename):
     X = np.hstack((X, np.array([[""] * len(X)]).T))
     ship = get_ship()
     ship['grid'] = X
-    # CALL THE ALGORITHM HERE
-    # steps, total_time = algorithm(X)
-    
-    # example data
-    total_time = 10
-    steps = np.array([[9, 1, 1, 2],
-                      [1, 2, 2, 3],
-                      [2, 3, 3, 4],
-                      [3, 4, 4, 5],
-                      [4, 5, 9, 1]])
-    # steps = np.insert(steps, 0, [-1, -1, steps[0, 0], steps[0, 1]], axis=0)
-    # steps = np.vstack((steps, [steps[-1, 2], steps[-1, 3], -1, -1]))
+
+    steps, total_time = algorithm.a_star(X)
+
+    steps = np.insert(steps, 0, [9, 1, steps[0, 0], steps[0, 1]], axis=0)
+    steps = np.vstack((steps, [steps[-1, 2], steps[-1, 3], 9, 1]))
 
     ship['park'] = 'green'
     ship['steps'] = steps
@@ -85,6 +79,7 @@ def call_algorithm(filename):
 
     index = grid_index(steps[0, 2], steps[0, 3])
     ship['grid'][index, 4] = 'red'
+
     # print(ships[session['session_id']])
 
 def unique_token():
