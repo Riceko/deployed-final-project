@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import os
 import sys
 from werkzeug.utils import secure_filename
-from flask import Flask, render_template, request, redirect, url_for, abort, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, abort, session, jsonify, send_file
 import secrets
 import algorithm
 import fileinput
@@ -27,7 +27,8 @@ app.secret_key = secrets.token_hex()
 # 'move_container' = a boolean that is true if we move a container on this step and false if we're
 #                    just repositioning the claw to the next cell.
 # 'all_done' = a boolean that is true if we are currently on the last step and false otherwise.
-# 'file_name' = the name of the file that contains the outbound manifest.
+# 'file_name' = the full path of the file that contains the outbound manifest.
+# 'output_name' = the name that the file should be when we output it.
 ships = {}
 PARK_Y_COORD = 9
 PARK_X_COORD = 1
@@ -53,6 +54,15 @@ def grid_index(y, x):
     index = np.where((X[:, 0] == y_coord) & (X[:, 1] == x_coord))[0]
     return index[0]
 
+def get_unique_file_name(folder_path, file_name):
+    counter = 0
+    original = file_name.split(".")[0]
+    extension = "." + file_name.split(".")[1]
+    while os.path.exists(folder_path + file_name):
+        counter += 1
+        file_name = original + str(counter) + extension
+    return file_name
+
 def call_algorithm(filename):
     FOLDER_PATH = './data/'
     X = np.loadtxt(FOLDER_PATH+filename, dtype=str, delimiter=',')
@@ -69,9 +79,11 @@ def call_algorithm(filename):
     steps, total_time = algorithm.a_star(X)
 
     # rename the file to "file_nameOUTBOUND.txt"
-    new_name = FOLDER_PATH+filename.split(".")[0]+"OUTBOUND.txt"
-    os.rename(FOLDER_PATH+filename, new_name)
-    ship['file_name'] = new_name
+    output_name = filename.split(".")[0]+"OUTBOUND.txt"
+    full_name = FOLDER_PATH + get_unique_file_name(FOLDER_PATH, output_name)
+    os.rename(FOLDER_PATH + filename, full_name)
+    ship['file_name'] = full_name
+    ship['output_name'] = output_name
 
     # if there are no steps to take, that means the ship is already balanced
     already_balanced = len(steps) == 0
@@ -98,8 +110,6 @@ def call_algorithm(filename):
     if not already_balanced:
         index = grid_index(steps[0, 2], steps[0, 3])
         ship['grid'][index, 4] = 'red'
-
-    # print(ships[session['session_id']])
 
 def unique_token():
     while True:
@@ -277,6 +287,16 @@ def next_grid():
          ship['grid'][grid_index(new_second_y_coord, new_second_x_coord), 4] = 'red'
 
     return current_grid()
+
+# input: none
+# output: the new manifest will be downloaded into the user's downloads folder
+@app.route('/download_manifest')
+def download_manifest():
+    ship = get_ship()
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(current_directory, '..', 'data', ship['file_name'].split("/")[-1])
+    full_path = os.path.normpath(path)
+    return send_file(full_path, as_attachment = True, download_name = ship['output_name'])
 
 if __name__ == '__main__':
     app.run(debug=True)
