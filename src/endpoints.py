@@ -120,7 +120,6 @@ def call_algorithm(filename):
     full_name = FOLDER_PATH + get_unique_file_name(FOLDER_PATH, output_name)
     
     shutil.copyfile(FOLDER_PATH + filename, full_name)
-    # os.rename(FOLDER_PATH + filename, full_name)
 
     ship['file_name'] = full_name
     ship['output_name'] = output_name
