@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, abort, session, jsonify, send_file
 import secrets
 import algorithm
+import shutil
 
 app = Flask(__name__)
 app.config['data'] = 'data'
@@ -117,7 +118,10 @@ def call_algorithm(filename):
     # rename the file to "file_nameOUTBOUND.txt"
     output_name = filename.split(".")[0]+"OUTBOUND.txt"
     full_name = FOLDER_PATH + get_unique_file_name(FOLDER_PATH, output_name)
-    os.rename(FOLDER_PATH + filename, full_name)
+    
+    shutil.copyfile(FOLDER_PATH + filename, full_name)
+    # os.rename(FOLDER_PATH + filename, full_name)
+
     ship['file_name'] = full_name
     ship['output_name'] = output_name
 
