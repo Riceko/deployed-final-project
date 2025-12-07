@@ -35,7 +35,12 @@ LOG_FILE_NAME = ''
 
 def log_header():
     time = datetime.now()
-    return str(time.month) + " " + str(time.day) + " " + str(time.year) + ": " + str(time.hour) + ":" + str(time.minute) + " "
+    def extend(int):
+        output = str(int)
+        if int < 10:
+            output = '0' + output
+        return output
+    return extend(time.month) + " " + extend(time.day) + " " + str(time.year) + ": " + extend(time.hour) + ":" + extend(time.minute) + " "
 
 def log(str):
     with open(LOG_FILE_NAME, "a") as file:
@@ -159,7 +164,12 @@ def display_start():
     # this means it's the first time on the page for this session
     if 'first_log' not in session:
         time = datetime.now()
-        file_name = "KeoghsPort" + str(time.month) + "_" + str(time.day) + "_" + str(time.year) + "_" + str(time.hour) + str(time.minute) + ".txt"
+        def extend(int):
+            output = str(int)
+            if int < 10:
+                output = '0' + output
+            return output
+        file_name = "KeoghsPort" + extend(time.month) + "_" + extend(time.day) + "_" + str(time.year) + "_" + extend(time.hour) + extend(time.minute) + ".txt"
         path = './logs/'
         LOG_FILE_NAME = path + file_name
 
