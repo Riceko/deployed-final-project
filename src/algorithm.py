@@ -107,8 +107,16 @@ def optimal_path(node: object):
     anchor = node
     actions = []
     nodes = []
-    action_list = []
+    action_cost_list = []
     total_cost = 0
+
+    parked = [9, 1]
+    crane_action = np.array([node.action[2], node.action[3], parked[0], parked[1]])
+    actions.append(crane_action)
+    action_cost = np.abs(crane_action[0] - crane_action[2]) + np.abs(crane_action[1] - crane_action[3])
+    action_cost_list.append(action_cost)
+    total_cost += action_cost
+
     while anchor.parent is not None:
         if len(nodes) != 0:
             prev_node = nodes[-1]
@@ -116,17 +124,24 @@ def optimal_path(node: object):
             crane_action = np.array([anchor.action[2], anchor.action[3], prev_action[0], prev_action[1]])
             actions.append(crane_action)
             action_cost = g_cost(prev_node, crane_action)
-            action_list.append(action_cost)
+            action_cost_list.append(action_cost)
             total_cost += action_cost
             
         actions.append(anchor.action)
-        action_list.append(anchor.cost)
+        action_cost_list.append(anchor.cost)
         total_cost += anchor.cost
 
         nodes.append(anchor)
         anchor = anchor.parent
+    
+    prev_node = nodes[-1]
+    crane_action = np.array([parked[0], parked[1], prev_node.action[0], prev_node.action[1]])
+    actions.append(crane_action)
+    action_cost = np.abs(crane_action[0] - crane_action[2]) + np.abs(crane_action[1] - crane_action[3])
+    action_cost_list.append(action_cost)
+    total_cost += action_cost
 
-    return np.vstack(actions)[::-1], total_cost, action_list[::-1]
+    return np.vstack(actions)[::-1], total_cost, np.vstack(action_cost_list)[::-1]
 
 def g_cost(node: object, action: np.ndarray):
     objects = node.label != 'UNUSED'
@@ -193,9 +208,6 @@ def a_star(X : np.ndarray):
     w_mask = (start.label != 'UNUSED') & (start.label != 'NAN')
     weights = np.sort(start.w[w_mask, 2])
 
-    # print(terminal_graphic(start))
-    # print(' ')
-
     min_local = round(total_weight*0.10, 2)
     min_global = 0
     if weights.size != 0:
@@ -242,9 +254,10 @@ if __name__ == '__main__':
     X[:, 1] = np.char.strip(X[:, 1], "]")
     X[:, 2] = np.char.strip(X[:, 2], "{} ")
     X[:, 3] = np.char.strip(X[:, 3], " ")
-    actions, total_cost = a_star(X)
-    # print('actions:', actions)
-    # print('total cost:', total_cost)
+    actions, total_cost, action_cost = a_star(X)
+    print('actions:', actions)
+    print('total cost:', total_cost)
+    print('action cost:', action_cost)
 
 
 
