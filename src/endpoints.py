@@ -103,19 +103,6 @@ def call_algorithm(filename):
 
     steps, total_time = algorithm.a_star(X)
 
-    # log that we found a solution
-    moves = ''
-    if len(steps) != 1:
-        moves = " moves"
-    else:
-        moves = " move"
-    minutes = ''
-    if total_time != 1:
-        minutes = " minutes"
-    else:
-        minutes = " minute"
-    log("Balance solution found, it will require " + str(len(steps)) + moves + "/" + str(total_time) + minutes + ".")
-
     # rename the file to "file_nameOUTBOUND.txt"
     output_name = filename.split(".")[0]+"OUTBOUND.txt"
     full_name = FOLDER_PATH + get_unique_file_name(FOLDER_PATH, output_name)
@@ -133,6 +120,19 @@ def call_algorithm(filename):
     if not already_balanced:
         steps = np.insert(steps, 0, [9, 1, steps[0, 0], steps[0, 1]], axis=0)
         steps = np.vstack((steps, [steps[-1, 2], steps[-1, 3], 9, 1]))
+
+    # log that we found a solution
+    moves = ''
+    if len(steps) != 1:
+        moves = " moves"
+    else:
+        moves = " move"
+    minutes = ''
+    if total_time != 1:
+        minutes = " minutes"
+    else:
+        minutes = " minute"
+    log("Balance solution found, it will require " + str(len(steps)) + moves + "/" + str(total_time) + minutes + ".")
 
     # if the ships is already balanced, we don't have to display any steps
     if not already_balanced:
@@ -284,6 +284,20 @@ def next_grid():
     else:
         ship['grid'][grid_index(second_y_coord, second_x_coord), 4] = ''
 
+    def to_string(num):
+        output = str(num)
+        if num < 10:
+            output = '0' + output
+        return output
+    coords = ship['steps'][curr_step]
+    first = "[" + to_string(coords[0]) + "," + to_string(coords[1]) + "]"
+    if coords[0] == 9:
+        first = "PARK"
+    second = "[" + to_string(coords[2]) + "," + to_string(coords[3]) + "]"
+    if coords[2] == 9:
+        second = "PARK"
+    log(str(ship['current_step_num'] + 1) + " of " + str(ship['num_steps']) + ": Move from " + first + " to " + second)
+
     # if we just finished the last step, we'll clear the colors and flip to 'all_done'
     # bool to indicate that we're done. We will not change anything else.
     if ship['current_step_num'] >= ship['num_steps'] - 1:
@@ -326,13 +340,13 @@ def next_grid():
         ship['grid'][first_index, 3], ship['grid'][second_index, 3] = ship['grid'][second_index, 3], ship['grid'][first_index, 3]
 
         # log that we moved a container
-        def to_string(num):
-            output = str(num)
-            if num < 10:
-                output = '0' + output
-            return output
-        coords = ship['steps'][curr_step]
-        log("[" + to_string(coords[0]) + "," + to_string(coords[1]) + "] was moved to [" + to_string(coords[2]) + "," + to_string(coords[3]) + "]")
+        # def to_string(num):
+        #     output = str(num)
+        #     if num < 10:
+        #         output = '0' + output
+        #     return output
+        # coords = ship['steps'][curr_step]
+        # log("[" + to_string(coords[0]) + "," + to_string(coords[1]) + "] was moved to [" + to_string(coords[2]) + "," + to_string(coords[3]) + "]")
 
     # update 'current_step_num'
     ship['current_step_num'] += 1
