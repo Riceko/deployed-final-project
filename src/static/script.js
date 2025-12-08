@@ -29,7 +29,7 @@ async function nextStep() {
         const response = await fetch('/api/next_grid', { method: 'POST' });
         const data = await response.json();
         
-        addStepToHistory(data);
+        rebuildStepHistory(data);
         
         renderSystem(data);
     } catch (error) {
@@ -37,54 +37,11 @@ async function nextStep() {
     }
 }
 
-function addStepToHistory(data) {
-    if (data.steps.length === 0) {
-        return;
-    }
-    let currentStep = data.current_step_num;
-    if (data.all_done) {
-        currentStep = data.steps.length - 1; 
-    }
-
-    if (currentStep >= 0 && currentStep < data.steps.length) {
-        const step = data.steps[currentStep];
-        const fromY = String(step[0]).padStart(2, '0');
-        const fromX = String(step[1]).padStart(2, '0');
-        const toY = String(step[2]).padStart(2, '0');
-        const toX = String(step[3]).padStart(2, '0');
-        
-        const fromLabel = (fromY === '09' && fromX === '01') ? 'park' : `[${fromY},${fromX}]`;
-        const toLabel = (toY === '09' && toX === '01') ? 'park' : `[${toY},${toX}]`;
-        
-        // Determine whether this step is a container move (odd indices)
-        const isMove = currentStep % 2 === 1;
-
-        // Show each backend step as its own numbered move
-        const stepNum = currentStep + 1;
-        const totalSteps = data.num_steps;
-
-        // Formatting with Colors for Dark Mode
-        const fromSpan = `<span style="color: #2ecc71; font-weight: bold;">${fromLabel}</span>`;
-        const toSpan = `<span style="color: #e74c3c; font-weight: bold;">${toLabel}</span>`;
-
-        let message = '';
-        if (isMove) {
-            message = `${stepNum} of ${totalSteps}: Move from ${fromSpan} to ${toSpan}`;
-        } else {
-            // crane repositioning / move of the crane itself
-            message = `${stepNum} of ${totalSteps}: Move crane from ${fromSpan} to ${toSpan}`;
-        }
-
-        if (stepHistory.length === 0 || stepHistory[stepHistory.length - 1] !== message) {
-            stepHistory.push(message);
-            renderStepLog();
-        }
-    }
-}
 
 function renderStepLog() {
     const container = document.getElementById('step-log');
-    if (!container) return;
+    if (!container) 
+        return;
 
     container.innerHTML = '';
 
@@ -100,7 +57,6 @@ function renderStepLog() {
         container.appendChild(item);
     });
 
-    // keep the most recent entry visible
     container.scrollTop = container.scrollHeight;
 }
 function rebuildStepHistory(data) {
