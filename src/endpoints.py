@@ -384,7 +384,7 @@ def log_message():
 # output: the log files will be downloaded into the user's downloads folder
 @app.route('/close')
 def close():
-    log("Window was closed.")
+    log("Log file was downloaded.")
 
     ship = get_ship()
     current_directory = os.path.dirname(os.path.abspath(__file__))
