@@ -226,7 +226,7 @@ def a_star(X : np.ndarray):
 
         if (node.score <= min_global) or (node.score <= min_local):
             if node == start:
-                return [], 0
+                return np.array([]), 0, np.array([])
             # print('g(n) =', node.gn,'h(n) =', node.hn, 'f(n) =', node.fn)
             # print('balance_score:', node.score)
             # print('action:', node.action, 'cost:', node.cost)
