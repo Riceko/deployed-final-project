@@ -103,9 +103,8 @@ def call_algorithm(filename):
     log("Manifest " + filename + " is opened, there are " + str(num_containers) + ending)
 
     steps, total_time, costs = algorithm.a_star(X)
-    print("costs:", costs)
 
-    # rename the file to "file_nameOUTBOUND.txt"
+    # make a new file called "file_nameOUTBOUND.txt"
     output_name = filename.split(".")[0]+"OUTBOUND.txt"
     full_name = FOLDER_PATH + get_unique_file_name(FOLDER_PATH, output_name)
     
@@ -119,9 +118,9 @@ def call_algorithm(filename):
 
     # if the ship is already balanced, don't add the movements for going
     # to and from the park cell
-    if not already_balanced:
-        steps = np.insert(steps, 0, [9, 1, steps[0, 0], steps[0, 1]], axis=0)
-        steps = np.vstack((steps, [steps[-1, 2], steps[-1, 3], 9, 1]))
+    # if not already_balanced:
+    #     steps = np.insert(steps, 0, [9, 1, steps[0, 0], steps[0, 1]], axis=0)
+    #     steps = np.vstack((steps, [steps[-1, 2], steps[-1, 3], 9, 1]))
 
     # log that we found a solution
     moves = ''
@@ -250,7 +249,8 @@ def current_grid():
                    current_step_num=ship['current_step_num'],
                    all_done=ship['all_done'],
                    total_time=int(ship['total_time']),
-                   costs=ship['costs'])
+                   costs=ship['costs'].tolist())
+                   
 
 # POST method to call when the user presses the enter key. returns the next grid step.
 # Input: none
@@ -300,7 +300,11 @@ def next_grid():
     second = "[" + to_string(coords[2]) + "," + to_string(coords[3]) + "]"
     if coords[2] == 9:
         second = "PARK"
-    log(str(ship['current_step_num'] + 1) + " of " + str(ship['num_steps']) + ": Move from " + first + " to " + second)
+    real_minutes = ship['costs'][ship['current_step_num']]
+    minutes = "minutes"
+    if real_minutes == 1:
+        minutes = "minute"
+    log(str(ship['current_step_num'] + 1) + " of " + str(ship['num_steps']) + ": Move from " + first + " to " + second + ", " + str(real_minutes) + " " + minutes)
 
     # if we just finished the last step, we'll clear the colors and flip to 'all_done'
     # bool to indicate that we're done. We will not change anything else.

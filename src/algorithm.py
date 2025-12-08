@@ -141,7 +141,7 @@ def optimal_path(node: object):
     action_cost_list.append(action_cost)
     total_cost += action_cost
 
-    return np.vstack(actions)[::-1], total_cost, np.vstack(action_cost_list)[::-1]
+    return np.vstack(actions)[::-1], total_cost, np.vstack(action_cost_list)[::-1].ravel()
 
 def g_cost(node: object, action: np.ndarray):
     objects = node.label != 'UNUSED'
