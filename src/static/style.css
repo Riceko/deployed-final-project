@@ -7,6 +7,10 @@
             justify-content: center;
         }
         
+        #buffer-grid {
+        grid-template-columns: 60px;
+        grid-template-rows: 60px;
+    }
         #ship-grid {
             grid-template-columns: repeat(12, 60px);
             grid-template-rows: repeat(8, 60px);

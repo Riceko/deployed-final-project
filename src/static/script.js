@@ -57,15 +57,13 @@ function renderSystem(data) {
     const bufferContainer = document.getElementById('buffer-grid');
     bufferContainer.innerHTML = '';
     
-    for (let x = 1; x <= 4; x++) {
-        const cellData = gridMap[`9,${x}`]; 
-        const cellDiv = createCell(cellData, 9, x);
-        if (x === 1 && data.park_cell) {
-             cellDiv.classList.add(`highlight-${data.park_cell}`);
-        }
-        
-        bufferContainer.appendChild(cellDiv);
+    const cellData = gridMap[`9,1`]; 
+    const cellDiv = createCell(cellData, 9, 1);
+    if (data.park_cell) {
+        cellDiv.classList.add(`highlight-${data.park_cell}`);
     }
+    
+    bufferContainer.appendChild(cellDiv);
 }
 
 function createCell(cellData, y, x) {
