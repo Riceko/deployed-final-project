@@ -1,13 +1,64 @@
 let stepHistory = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchGridState();
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            nextStep();
+    // If we're on the grid page (has ship-grid), initialize grid handlers
+    if (document.getElementById('ship-grid')) {
+        fetchGridState();
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                nextStep();
+            }
+        });
+    }
+
+    // If we're on the start/upload page (has uploadForm), initialize its handlers
+    if (document.getElementById('uploadForm')) {
+        initStartPage();
+    }
+});
+
+// Initialize start page upload form behavior (moved from inline start.html script)
+function initStartPage() {
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const submitBtn = document.getElementById('submitBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const uploadForm = document.getElementById('uploadForm');
+
+    if (!fileInput || !fileName || !submitBtn || !errorMsg || !uploadForm) return;
+
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            if (!file.name.endsWith('.txt')) {
+                errorMsg.textContent = 'Error: Please select a .txt file';
+                fileName.textContent = 'No file selected';
+                submitBtn.disabled = true;
+                return;
+            }
+            errorMsg.textContent = '';
+            fileName.innerHTML = `
+                <div class="flex items-center justify-center space-x-2">
+                    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-green-400 font-semibold">${file.name}</span>
+                </div>
+            `;
+            submitBtn.disabled = false;
+        } else {
+            fileName.textContent = 'No file selected';
+            submitBtn.disabled = true;
         }
     });
-});
+
+    uploadForm.addEventListener('submit', function(e) {
+        if (!fileInput.files || !fileInput.files[0]) {
+            e.preventDefault();
+            errorMsg.textContent = 'Error: Please select a file first';
+        }
+    });
+}
 
 async function fetchGridState() {
     try {
@@ -73,14 +124,15 @@ function StepHistory(data) {
 
     for (let idx = 0; idx < completedCount; idx++) {
         const step = data.steps[idx];
-        //const costs = data.costs[idx];
-        //const time = String(costs).padStart(2, '0');
+        const costs = data.costs[idx];
+        const time = String(costs).padStart(1, '0');
         const fromY = String(step[0]).padStart(2, '0');
         const fromX = String(step[1]).padStart(2, '0');
         const toY = String(step[2]).padStart(2, '0');
         const toX = String(step[3]).padStart(2, '0');
         const fromLabel = (fromY === '09' && fromX === '01') ? 'park' : `[${fromY},${fromX}]`;
         const toLabel = (toY === '09' && toX === '01') ? 'park' : `[${toY},${toX}]`;
+        
 
         const isMove = idx % 2 === 1; //moving a container are odd
         const stepNum = idx + 1;
@@ -90,16 +142,22 @@ function StepHistory(data) {
 
         let message = '';
         if (isMove) {
-             message = `${stepNum} of ${totalSteps}: Move from ${fromSpan} to ${toSpan}`;
-            //message = `${stepNum} of ${totalSteps}: Move from ${fromSpan} to ${toSpan} and it takes, ${time} minutes`;
+             //message = `${stepNum} of ${totalSteps}: Move from ${fromSpan} to ${toSpan}`;
+            message = `${stepNum} of ${totalSteps}: Move from ${fromSpan} to ${toSpan}, ${time} minutes`;
         } else {
-            message = `${stepNum} of ${totalSteps}: Move crane from ${fromSpan} to ${toSpan}`;
-            //message = `${stepNum} of ${totalSteps}: Move crane from ${fromSpan} to ${toSpan} and it takes, ${time} minutes`;
+            //message = `${stepNum} of ${totalSteps}: Move crane from ${fromSpan} to ${toSpan}`;
+            message = `${stepNum} of ${totalSteps}: Move crane from ${fromSpan} to ${toSpan}, ${time} minutes`;
         }
 
         if (stepHistory.length === 0 || stepHistory[stepHistory.length - 1] !== message) {
             stepHistory.push(message);
         }
+    }
+    if(data.all_done)
+    {
+        const filename = data.file_name;
+        const donemessage =`<span >Done! ${filename} was written to Desktop!</span>`
+        stepHistory.push(donemessage);
     }
 
     renderStepLog();
@@ -184,4 +242,8 @@ function downloadManifest() {
 
 function closeApp() {
     window.location.href = "/close";
+}
+
+function goBack() {
+    window.location.href = "/";
 }

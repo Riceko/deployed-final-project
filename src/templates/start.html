@@ -57,44 +57,6 @@
        
     </div>
 
-    <script>
-        const fileInput = document.getElementById('fileInput');
-        const fileName = document.getElementById('fileName');
-        const submitBtn = document.getElementById('submitBtn');
-        const errorMsg = document.getElementById('errorMsg');
-        const uploadForm = document.getElementById('uploadForm');
-
-        fileInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const file = this.files[0];
-                if (!file.name.endsWith('.txt')) {
-                    errorMsg.textContent = 'Error: Please select a .txt file';
-                    fileName.textContent = 'No file selected';
-                    submitBtn.disabled = true;
-                    return;
-                }
-                errorMsg.textContent = '';
-                fileName.innerHTML = `
-                    <div class="flex items-center justify-center space-x-2">
-                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span class="text-green-400 font-semibold">${file.name}</span>
-                    </div>
-                `;
-                submitBtn.disabled = false;
-            } else {
-                fileName.textContent = 'No file selected';
-                submitBtn.disabled = true;
-            }
-        });
-
-        uploadForm.addEventListener('submit', function(e) {
-            if (!fileInput.files || !fileInput.files[0]) {
-                e.preventDefault();
-                errorMsg.textContent = 'Error: Please select a file first';
-            }
-        });
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

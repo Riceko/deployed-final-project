@@ -24,7 +24,7 @@
         <h1 class="text-4xl md:text-5xl font-bold text-green-400 tracking-wide mb-3">
             SHIP CONTAINER BALANCING
         </h1>
-        <p class="text-gray-300 mb-4 text-base md:text-lg">A solution has been found it will take: <br> <span id="steps-display">Loading...</span> Moves <br> <span id="time-display">Loading...</span> Minutes</p>
+        <p class="text-gray-300 mb-4 text-base md:text-lg">A solution has been found it will take: <br> <span id="steps-display">Loading...</span> Moves <br> <span id="time-display">Loading...</span> Minutes<br>REMINDER TO EMAIL CAPTAIN THE NEW MANIFEST</p>
         
         <div id="status-text" class="text-xl md:text-2xl text-blue-400">
             Loading...
@@ -103,6 +103,14 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                             </svg>
                             Download Log
+                        </button>
+                        <button 
+                            onclick="goBack()" 
+                            class="group relative px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2">
+                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                            New Ship
                         </button>
                     </div>
                 </div>
