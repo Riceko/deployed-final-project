@@ -12,8 +12,10 @@ import algorithm
 import shutil
 
 app = Flask(__name__)
+# Keep data folder path configurable
 app.config['data'] = 'data'
-app.secret_key = secrets.token_hex()
+# Use an explicit secret key in production via the SECRET_KEY env var
+app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex())
 
 # This dictionary will store all of the data for all of the different sessions.
 # The key is the session_id found in the session array managed by Flask.
@@ -410,4 +412,8 @@ def close():
     return send_file(full_path, as_attachment = True, download_name = plain_name)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Read port and debug settings from environment so Vercel (or other hosts)
+    # can configure these values. In production, FLASK_DEBUG should be false.
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() in ('1', 'true', 'yes')
+    app.run(host='0.0.0.0', port=port, debug=debug)
